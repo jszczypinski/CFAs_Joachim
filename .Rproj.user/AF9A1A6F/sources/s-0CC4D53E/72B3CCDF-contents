@@ -92,7 +92,7 @@ cfa.scalar <- cfa(model3, data = d, estimator = "WLSMV", group = "diagnoza",
                   std.lv=TRUE, missing = "listwise", ordered = TRUE, group.equal = c('loadings', 'intercepts')) 
 #group.partial = c('factor  =~ pq1', 'factor  =~ pq2', 'factor  =~ pq3'))
 
-summary(cfa.config, fit.measures = TRUE, standardized = TRUE)
+summary(cfa.scalar fit.measures = TRUE, standardized = TRUE)
 
 x = compareFit(cfa.metric, cfa.scalar, nested = T )
 x
@@ -102,7 +102,7 @@ cfa.strict <- cfa(model3, data = d, estimator = "WLSMV", group = "diagnoza",
                   std.lv=TRUE, missing = "listwise", ordered = TRUE, group.equal = c('loadings', 'intercepts', 'residuals')) 
 #group.partial = c('factor  =~ pq1', 'factor  =~ pq2', 'factor  =~ pq3'))
 
-summary(cfa.config, fit.measures = TRUE, standardized = TRUE)
+summary(cfa.strict, fit.measures = TRUE, standardized = TRUE)
 
 x = compareFit(cfa.scalar, cfa.strict, nested = T)
 x
