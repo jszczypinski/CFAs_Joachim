@@ -1,0 +1,34 @@
+setwd("C:/Users/jachu/NCET_IRT_analysis")
+d= read.csv("NCET_IRT_analysis.csv", sep=",", header=T, na.strings = c(""," "))
+library(psych)
+library(ltm)
+
+fit1 = rasch(d, constraint = cbind(length(d)+1,1))
+summary(fit1)
+coef(fit1,prob=TRUE)
+GoF.rasch(fit1,B=199)
+
+
+colSums (d, na.rm = FALSE, dims = 1)
+d1 = d[,colSums(d) < 41]
+d1 = d1[,colSums(d1) != 0]
+
+fit2 <- rasch(d1) 
+summary(fit2)
+coef(fit2,prob=TRUE)
+anova(fit1,fit2)
+
+plot(fit2, type = 'ICC', lwd = 2)
+plot(fit2, type = 'IIC', lwd = 2)
+
+
+
+fit3 <- ltm(d1 ~ z1, IRT.param = T)
+summary(fit3)
+coef(fit3,prob=TRUE)
+x = qr.coef(qr(d), diag(nrow(d)))
+
+
+fit4 <- tpm(d, type="rasch", max.guessing = 1)
+
+

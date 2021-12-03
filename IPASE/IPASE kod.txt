@@ -1,0 +1,54 @@
+setwd("C:/Users/48607/Desktop/psychotic-like narzędzia badanie/IPASE_R")
+> IPASE_data = read.csv("IPASE.csv", sep=",", header=T, na.strings = c(" "))
+
+factor_model = 'transitivism =~ IPASE_1+IPASE_4+IPASE_13
+selfawareness =~ IPASE_2+IPASE_3+IPASE_10
+consciousness =~ IPASE_5+IPASE_8+IPASE_11
+cognition =~ IPASE_7+IPASE_14+IPASE_15
+somatization =~IPASE_6+IPASE_9+IPASE_12
+#free covariance
+IPASE_4~~IPASE_13
+'
+
+factor_fit = cfa(factor_model, data = IPASE_data, estimator = 'WLSMV')
+
+summary(factor_fit, fit.measures=TRUE)
+
+mod_indices = modificationindices(factor_fit)
+
+head(mod_indices[order(mod_indices$mi, decreasing = T),],20)
+
+
+one_factor_model_MI = 'transitivism =~ IPASE_1+IPASE_4+IPASE_13
+selfawareness =~ IPASE_2+IPASE_3+IPASE_10
+consciousness =~ IPASE_5+IPASE_8+IPASE_11
+cognition =~ IPASE_7+IPASE_14+IPASE_15
+somatization =~ IPASE_6+IPASE_9+IPASE_12
+superczynnik =~ transitivism+selfawareness+consciousness+cognition+somatization
+#free covariance
+IPASE_5~~IPASE_8
+IPASE_4~~IPASE_13
+'
+
+one_factor_fit_MI = cfa(one_factor_model_MI, data = IPASE_data, estimator = 'WLSMV')
+summary(one_factor_fit_MI, fit.measures=TRUE)
+
+mod_indices_onefactor_MI = modificationindices(one_factor_fit_MI)
+head(mod_indices_onefactor_MI[order(mod_indices_onefactor_MI$mi, decreasing = T),],20)
+
+
+
+
+superfactor_factor_model_MI = 'superfactor =~ IPASE_1+IPASE_4+IPASE_13+IPASE_2+IPASE_3+IPASE_10+IPASE_5+IPASE_8+IPASE_11+IPASE_7+IPASE_14+IPASE_15+IPASE_6+IPASE_9+IPASE_12
+#free covariance
+IPASE_4~~IPASE_13
+IPASE_2~~IPASE_3
+IPASE_5~~IPASE_8
+IPASE_6~~IPASE_9
+'
+
+superfactor_factor_fit_MI = cfa(superfactor_factor_model_MI, data = IPASE_data, estimator = 'WLSMV')
+summary(superfactor_factor_fit_MI, fit.measures=TRUE)
+
+mod_indices_superfactor_MI = modificationindices(superfactor_factor_fit_MI)
+head(mod_indices_superfactor_MI[order(mod_indices_superfactor_MI$mi, decreasing = T),],20)

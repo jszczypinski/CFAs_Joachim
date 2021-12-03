@@ -1,0 +1,5 @@
+"0","d <- read.csv(""GPTS.csv"", sep="","", header =T)
+"
+"2","nie mo�na otworzy� pliku 'GPTS.csv': No such file or directory"
+"2","Błąd w poleceniu 'file(file, ""rt"")':nie można otworzyć połączenia
+"

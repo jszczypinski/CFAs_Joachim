@@ -1,0 +1,305 @@
+---
+title: "Joachim_CFA_report"
+author: "Jan Szczypiński"
+date: "08 10 2021"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+## Zaczynam od analizy GPTS
+
+```{r, echo=FALSE}
+library(lavaan)
+library(semTools)
+library(dplyr)
+setwd("f:/projekty/Joachim/GPTS")
+d <- read.csv("GPTS.csv", sep=",", header =T)
+colnames(d)[1] = 'PartA_gptsa1'     
+
+```
+### Pierwszy mnodel tak jak w pdfie: 
+
+```{r, echo = FALSE}
+library(lavaan)
+model1 = 'reference =~ PartA_gptsa1 + PartA_gptsa2 +PartA_gptsa3 + PartA_gptsa4 +
+          PartA_gptsa5 + PartA_gptsa6 + PartA_gptsa7  + PartA_gptsa8
+          
+          persecutory =~ partB_gptsb1 + partB_gptsb2 + partB_gptsb3 + partB_gptsb4 +
+          partB_gptsb5 + partB_gptsb6 + partB_gptsb7 + partB_gptsb8 + partB_gptsb9 +
+          partB_gpts10'
+
+model_fit1 = cfa(model1, data = d, estimator = "WLSMV", std.lv=TRUE, missing = "listwise", ordered = T)
+fitmeasures(model_fit1,c('chisq.scaled','df.scaled',                      'cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
+
+reliability(model_fit1)
+         
+```
+
+### Drugi model z wyrzuconym itemem 8_A, który ładował dwie skale (usunięcie na podstawie mod indices.)
+
+```{r, echo = FALSE}
+library(lavaan)
+model2 = 'reference =~ PartA_gptsa1 + PartA_gptsa2 +PartA_gptsa3 + PartA_gptsa4 +
+          PartA_gptsa5 + PartA_gptsa6 + PartA_gptsa7 
+          
+          persecutory =~ partB_gptsb1 + partB_gptsb2 + partB_gptsb3 + partB_gptsb4 +
+          partB_gptsb5 + partB_gptsb6 + partB_gptsb7 + partB_gptsb8 + partB_gptsb9 +
+          partB_gpts10'
+
+model_fit2 = cfa(model2, data = d, estimator = "WLSMV", std.lv=TRUE, missing = "listwise", ordered = T)
+fitmeasures(model_fit2,c('chisq.scaled','df.scaled',                      'cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
+
+robust_dif = function (x,y) {
+    fit_x = fitmeasures(x,c('chisq.scaled', 'df.scaled', 'chisq.scaling.factor'))
+    fit_y= fitmeasures(y,c('chisq.scaled', 'df.scaled', 'chisq.scaling.factor'))
+    fit_x=as.list(fit_x)
+    fit_y=as.list(fit_y)
+    cd = (fit_x$df.scaled * fit_x$chisq.scaling.factor - fit_y$df.scaled * fit_y$chisq.scaling.factor)/
+        (fit_x$df.scaled-fit_y$df.scaled)
+    Test_stat = (fit_x$chisq.scaled * fit_x$chisq.scaling.factor - 
+                     fit_y$chisq.scaled * fit_y$chisq.scaling.factor) /cd
+    p_val = pchisq(Test_stat,df=fit_x$df.scaled-fit_y$df.scaled, lower.tail = FALSE)
+    Test = c(Test_stat,p_val)
+    return(Test)
+}
+
+reliability(model_fit2)
+```
+
+### Różnica w teście robust chi square między modelem 1 i 2
+```{r, echo = FALSE}
+library(lavaan)
+round(robust_dif(model_fit1,model_fit2), digits = 3)
+```
+
+### model 3 z dodaną kowariancją między partB_gptsb2 ~~ partB_gptsb4 na podstawie mod indices:
+```{r, echo = FALSE}
+library(lavaan)
+model3 = 'reference =~ PartA_gptsa1 + PartA_gptsa2 +PartA_gptsa3 + PartA_gptsa4 +
+          PartA_gptsa5 + PartA_gptsa6 + PartA_gptsa7 
+          
+          persecutory =~ partB_gptsb1 + partB_gptsb2 + partB_gptsb3 + partB_gptsb4 +
+          partB_gptsb5 + partB_gptsb6 + partB_gptsb7 + partB_gptsb8 + partB_gptsb9 +
+          partB_gpts10
+partB_gptsb2 ~~ partB_gptsb4'
+
+model_fit3 = cfa(model3, data = d, estimator = "WLSMV", std.lv=TRUE, missing = "listwise", ordered = T)
+fitmeasures(model_fit3,c('chisq.scaled','df.scaled',                      'cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
+reliability(model_fit3)
+```
+
+### Różnica w teście robust chi square między modelem 2 i 3
+```{r, echo = FALSE}
+library(lavaan)
+round(robust_dif(model_fit2,model_fit3), digits = 3)
+```
+### model 4 z dodaną kowariancją między partB_gptsb3 ~~ partB_gptsb4 na podstawie mod indices:
+```{r, echo = FALSE}
+library(lavaan)
+model4 = 'reference =~ PartA_gptsa1 + PartA_gptsa2 +PartA_gptsa3 + PartA_gptsa4 +
+          PartA_gptsa5 + PartA_gptsa6 + PartA_gptsa7 
+          
+          persecutory =~ partB_gptsb1 + partB_gptsb2 + partB_gptsb3 + partB_gptsb4 +
+          partB_gptsb5 + partB_gptsb6 + partB_gptsb7 + partB_gptsb8 + partB_gptsb9 +
+          partB_gpts10
+partB_gptsb2 ~~ partB_gptsb4
+partB_gptsb3 ~~ partB_gptsb4'
+
+model_fit4 = cfa(model4, data = d, estimator = "WLSMV", std.lv=TRUE, missing = "listwise", ordered = T)
+fitmeasures(model_fit4,c('chisq.scaled','df.scaled',                      'cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
+reliability(model_fit4)
+```
+
+### Różnica w teście robust chi square między modelem 3 i 4
+```{r, echo = FALSE}
+library(lavaan)
+round(robust_dif(model_fit3,model_fit4), digits = 3)
+```
+
+### model 5 z dodaną kowariancją między partB_gptsb2 ~~ partB_gptsb3 na podstawie mod indices:
+```{r, echo = FALSE}
+library(lavaan)
+model5 = 'reference =~ PartA_gptsa1 + PartA_gptsa2 +PartA_gptsa3 + PartA_gptsa4 +
+          PartA_gptsa5 + PartA_gptsa6 + PartA_gptsa7 
+          
+          persecutory =~ partB_gptsb1 + partB_gptsb2 + partB_gptsb3 + partB_gptsb4 +
+          partB_gptsb5 + partB_gptsb6 + partB_gptsb7 + partB_gptsb8 + partB_gptsb9 +
+          partB_gpts10
+partB_gptsb2 ~~ partB_gptsb4
+partB_gptsb3 ~~ partB_gptsb4
+partB_gptsb2 ~~ partB_gptsb3'
+
+model_fit5 = cfa(model5, data = d, estimator = "WLSMV", std.lv=TRUE, missing = "listwise", ordered = T)
+fitmeasures(model_fit5,c('chisq.scaled','df.scaled',                      'cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
+reliability(model_fit5)
+```
+
+### Różnica w teście robust chi square między modelem 4 i 5
+```{r, echo = FALSE}
+library(lavaan)
+round(robust_dif(model_fit4, model_fit5), digits = 3)
+```
+
+## Teraz będzie MUSEQ
+
+### Model 1
+
+```{r, echo = FALSE}
+library(lavaan)
+library(semTools)
+setwd("f:/projekty/Joachim/MUSEQ")
+d = read.csv("MUSEQ.csv", sep=",",  header=T)
+
+colnames(d)[1] = 'MUSEQ_1' 
+
+model = 'auditory =~MUSEQ_1+MUSEQ_2+MUSEQ_3+MUSEQ_4+MUSEQ_5+MUSEQ_6+MUSEQ_7
+
+visual =~ MUSEQ2_1+MUSEQ2_2+MUSEQ2_3+MUSEQ2_4+MUSEQ2_5+MUSEQ2_6+MUSEQ2_7+MUSEQ2_8
+
+olfactory =~ MUSEQ3_1+MUSEQ3_2+MUSEQ3_3+MUSEQ3_4+MUSEQ3_5+MUSEQ3_6+MUSEQ3_7
+
+gustatory =~ MUSEQ4_1+MUSEQ4_2+MUSEQ4_3+MUSEQ4_4+MUSEQ4_5+MUSEQ4_6+MUSEQ4_7+MUSEQ4_8
+
+bodily =~ MUSEQ5_1+MUSEQ5_2+MUSEQ5_3+MUSEQ5_4+MUSEQ5_5+MUSEQ5_6+MUSEQ5_7+MUSEQ5_8
+
+presence =~ MUSEQ6_1+MUSEQ6_2+MUSEQ6_3+MUSEQ6_4
+
+##covariances ##
+
+'
+fit = cfa(model, data = d, estimator = 'WLSMV', std.lv=TRUE, missing = "listwise", ordered = TRUE)
+
+fitmeasures(fit,c('chisq.scaled','df.scaled','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
+
+reliability(fit)
+```
+
+### Model 2 po usunięciu 3.3 i 4.3
+
+```{r, echo = FALSE}
+model2 = 'auditory =~MUSEQ_1+MUSEQ_2+MUSEQ_3+MUSEQ_4+MUSEQ_5+MUSEQ_6+MUSEQ_7
+
+visual =~ MUSEQ2_1+MUSEQ2_2+MUSEQ2_3+MUSEQ2_4+MUSEQ2_5+MUSEQ2_6+MUSEQ2_7+MUSEQ2_8
+
+olfactory =~ MUSEQ3_1+MUSEQ3_2+MUSEQ3_4+MUSEQ3_5+MUSEQ3_6+MUSEQ3_7
+
+gustatory =~ MUSEQ4_1+MUSEQ4_2+MUSEQ4_4+MUSEQ4_5+MUSEQ4_6+MUSEQ4_7+MUSEQ4_8
+
+bodily =~ MUSEQ5_1+MUSEQ5_2+MUSEQ5_3+MUSEQ5_4+MUSEQ5_5+MUSEQ5_6+MUSEQ5_7+MUSEQ5_8
+
+presence =~ MUSEQ6_1+MUSEQ6_2+MUSEQ6_3+MUSEQ6_4
+
+##covariances ##
+
+'
+fit2 = cfa(model2, data = d, estimator = 'WLSMV', std.lv=TRUE, missing = "listwise", ordered = TRUE)
+
+fitmeasures(fit2,c('chisq.scaled','df.scaled','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
+
+reliability(fit2)
+```
+
+### Porównanie między modelami 1 i 2 MUSEQ
+
+```{r, echo = FALSE}
+library(lavaan)
+round(robust_dif(fit, fit2), digits = 3)
+```
+
+### Model 2 po usunięciu 6.1
+
+```{r, echo = FALSE}
+model3 = 'auditory =~MUSEQ_1+MUSEQ_2+MUSEQ_3+MUSEQ_4+MUSEQ_5+MUSEQ_6+MUSEQ_7
+
+visual =~ MUSEQ2_1+MUSEQ2_2+MUSEQ2_3+MUSEQ2_4+MUSEQ2_5+MUSEQ2_6+MUSEQ2_7+MUSEQ2_8
+
+olfactory =~ MUSEQ3_1+MUSEQ3_2+MUSEQ3_4+MUSEQ3_5+MUSEQ3_6+MUSEQ3_7
+
+gustatory =~ MUSEQ4_1+MUSEQ4_2+MUSEQ4_4+MUSEQ4_5+MUSEQ4_6+MUSEQ4_7+MUSEQ4_8
+
+bodily =~ MUSEQ5_1+MUSEQ5_2+MUSEQ5_3+MUSEQ5_4+MUSEQ5_5+MUSEQ5_6+MUSEQ5_7+MUSEQ5_8
+
+presence =~ MUSEQ6_2+MUSEQ6_3+MUSEQ6_4
+
+##covariances ##
+
+'
+fit3 = cfa(model3, data = d, estimator = 'WLSMV', std.lv=TRUE, missing = "listwise", ordered = TRUE)
+
+fitmeasures(fit3,c('chisq.scaled','df.scaled','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
+
+reliability(fit3)
+```
+
+### Porównanie między modelami 2 i 3 MUSEQ
+
+```{r, echo = FALSE}
+library(lavaan)
+round(robust_dif(fit2, fit3), digits = 3)
+```
+
+
+## Analiza BAPS
+
+```{r, echo = FALSE}
+setwd("f:/projekty/Joachim/BAPS")
+
+d <- read.csv("BAPS.csv", sep=",", header =T)
+
+library(lavaan)
+
+colnames(d)[1] = 'BAPS1' 
+```
+### Model 1
+```{r, echo = FALSE}
+model = 'survival_strategy =~ BAPS1 + BAPS2 + BAPS3 + BAPS4 + BAPS5 + BAPS6
+        negative_beliefs =~ BAPS7 + BAPS8 + BAPS9 + BAPS10 + BAPS11 + BAPS12
+        normalizing_beliefs =~ BAPS13 + BAPS14 + BAPS15 + BAPS16 + BAPS17 + BAPS18'
+
+fit = cfa(model, data = d, estimator = 'WLSMV', ordered = TRUE, std.lv=TRUE, missing = "listwise",)
+
+fitmeasures(fit,c('chisq.scaled','df.scaled','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
+
+reliability(fit)
+```
+
+### Model 2 bez BAPS1
+```{r, echo = FALSE}
+model2 = 'survival_strategy =~ BAPS2 + BAPS3 + BAPS4 + BAPS5 + BAPS6
+        negative_beliefs =~ BAPS7 + BAPS8 + BAPS9 + BAPS10 + BAPS11 + BAPS12
+        normalizing_beliefs =~ BAPS13 + BAPS14 + BAPS15 + BAPS16 + BAPS17 + BAPS18'
+
+fit2 = cfa(model2, data = d, estimator = 'WLSMV', ordered = TRUE, std.lv=TRUE, missing = "listwise",)
+
+fitmeasures(fit2,c('chisq.scaled','df.scaled','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
+
+reliability(fit2)
+```
+
+### Porównanie między modelami 1 i 2 BAPS
+
+```{r, echo = FALSE}
+library(lavaan)
+round(robust_dif(fit, fit2), digits = 3)
+```
+
+#### MODEL 3 z dodaną kowariancją między BAPS13 i BAPS14
+```{r, echo = FALSE}
+model3 = 'survival_strategy =~ BAPS2 + BAPS3 + BAPS4 + BAPS5 + BAPS6
+        negative_beliefs =~ BAPS7 + BAPS8 + BAPS9 + BAPS10 + BAPS11 + BAPS12
+        normalizing_beliefs =~ BAPS13 + BAPS14 + BAPS15 + BAPS16 + BAPS17 + BAPS18
+BAPS13 ~~ BAPS14'
+
+fit3 = cfa(model3, data = d, estimator = 'WLSMV', ordered = TRUE, std.lv=TRUE, missing = "listwise",)
+fitmeasures(fit3,c('chisq.scaled','df.scaled','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
+reliability(fit3)
+
+```
+
+### Porównanie między modelami 2 i 3 BAPS
+
+```{r, echo = FALSE}
+library(lavaan)
+round(robust_dif(fit2, fit3), digits = 3)
+```

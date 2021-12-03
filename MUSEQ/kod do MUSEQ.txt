@@ -1,0 +1,57 @@
+#SKORELOWANY MODEL
+correlated_model_MI = 'auditory =~ MUSEQ_1+MUSEQ_4+MUSEQ_6+MUSEQ_7
+visual =~ MUSEQ2_1+MUSEQ2_5+MUSEQ2_7
+olfactory =~ MUSEQ3_1+MUSEQ3_5+MUSEQ3_6+MUSEQ3_7
+gustatory =~ MUSEQ4_1+MUSEQ4_2+MUSEQ4_4+MUSEQ4_5+MUSEQ4_6+MUSEQ4_7+MUSEQ4_8
+bodily =~ MUSEQ5_1+MUSEQ5_2+MUSEQ5_3+MUSEQ5_5+MUSEQ5_7
+presence =~ MUSEQ6_1+MUSEQ6_2+MUSEQ6_3
+auditory ~~ 1*auditory
+visual ~~ 1*visual
+olfactory ~~ 1*olfactory
+gustatory ~~ 1*gustatory
+bodily ~~ 1*bodily
+presence ~~ 1*presence
+#free variance
+MUSEQ4_7~~MUSEQ4_8
+MUSEQ6_2~~MUSEQ6_3
+'
+
+correlated_fit_MI = cfa(correlated_model_MI, data = MUSEQ_data, estimator = "MLR")
+summary(correlated_fit_MI, fit.measures=TRUE, standardized=TRUE)
+
+lavInspect(correlated_fit_MI, "cor.lv")
+resid(correlated_fit_MI, type="standardized")
+
+mod_indices_correlated_model_MI = modificationindices(correlated_fit_MI)
+head(mod_indices_correlated_model_MI[order(mod_indices_correlated_model_MI$mi, decreasing = T),],20)
+
+usunięte: MUSEQ_2, MUSEQ_3, MUSEQ_5, MUSEQ2_2, MUSEQ2_3, MUSEQ2_4, MUSEQ2_6, MUSEQ2_8, MUSEQ3_2, MUSEQ3_3, MUSEQ3_4, MUSEQ3_8, MUSEQ4_3, MUSEQ5_4, MUSEQ5_6, MUSEQ5_8, MUSEQ6_4
+(<0.7 stdr loading)
+ 
+
+#NADRZĘDNY CZYNNIK I POJEDYNCZE ZMIENNE
+superfactor_model_MI = 'auditory =~ MUSEQ_1+MUSEQ_4+MUSEQ_6+MUSEQ_7
+visual =~ MUSEQ2_1+MUSEQ2_5+MUSEQ2_7+MUSEQ2_8
+olfactory =~ MUSEQ3_1+MUSEQ3_5+MUSEQ3_6+MUSEQ3_7
+gustatory =~ MUSEQ4_1+MUSEQ4_2+MUSEQ4_4+MUSEQ4_5+MUSEQ4_6+MUSEQ4_7+MUSEQ4_8
+bodily =~ MUSEQ5_1+MUSEQ5_2+MUSEQ5_3+MUSEQ5_5+MUSEQ5_7
+presence =~ MUSEQ6_1+MUSEQ6_2+MUSEQ6_3
+superfactor =~ auditory+visual+olfactory+gustatory+bodily+presence
+superfactor ~~ 1*superfactor
+auditory ~~ 1*auditory
+visual ~~ 1*visual
+olfactory ~~ 1*olfactory
+gustatory ~~ 1*gustatory
+bodily ~~ 1*bodily
+presence ~~ 1*presence
+#free variance
+'
+
+superfactor_fit_MI = cfa(superfactor_model_MI, data = MUSEQ_data, estimator = "MLR", orthogonal = TRUE)
+summary(superfactor_fit_MI, fit.measures=TRUE, standardized=TRUE)
+
+mod_indices_superfactor_MI = modificationindices(superfactor_fit_MI)
+head(mod_indices_superfactor_MI[order(mod_indices_superfactor_MI$mi, decreasing = T),],20)
+
+usunięte: MUSEQ_2, MUSEQ_3, MUSEQ_5, MUSEQ2_2, MUSEQ2_3, MUSEQ2_4, MUSEQ2_6, MUSEQ3_2, MUSEQ3_3, MUSEQ3_4, MUSEQ3_8, MUSEQ4_3, MUSEQ5_4, MUSEQ5_6, MUSEQ5_8, MUSEQ6_4
+(<0.7 stdr loading)
