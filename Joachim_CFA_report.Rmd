@@ -93,7 +93,7 @@ robust_dif = function (x,y) {
     p_val = pchisq(Test_stat,df=fit_x$df.scaled-fit_y$df.scaled, lower.tail = FALSE)
     Test_stat = round(Test_stat,digits =3)
     p_val = round(p_val,digits =3)
-    Test = c('test statistic: ',Test_stat,'p value: ',p_val)
+    Test = c('chisq.diff: ',Test_stat,'p value: ',p_val)
     return(Test)
 }
 
@@ -109,101 +109,21 @@ library(lavaan)
 robust_dif(model_fit1,model_fit2)
 ```
 
-### model 3 with covariance added between partB_gptsb2 and partB_gptsb4 based on mod indices:
+### Summary of model 2 GPTS
 ```{r, echo = FALSE}
-library(lavaan)
-model3 = 'reference =~ PartA_gptsa1 + PartA_gptsa2 +PartA_gptsa3 + PartA_gptsa4 +
-          PartA_gptsa5 + PartA_gptsa6 + PartA_gptsa7 
-          
-          persecutory =~ partB_gptsb1 + partB_gptsb2 + partB_gptsb3 + partB_gptsb4 +
-          partB_gptsb5 + partB_gptsb6 + partB_gptsb7 + partB_gptsb8 + partB_gptsb9 +
-          partB_gpts10
-partB_gptsb2 ~~ partB_gptsb4'
-
-model_fit3 = cfa(model3, data = d, estimator = "WLSMV", std.lv=TRUE, missing = "listwise", ordered = T)
-fitmeasures(model_fit3,c('chisq.scaled','df.scaled',
-                         'cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
-reliability(model_fit3)
-
-mod_indices = modificationindices(model_fit2)
-head(mod_indices[order(mod_indices$mi, decreasing = T),],10)
-
+summary(model_fit2, standardized=TRUE)
 ```
 
-### Difference in robust chi-square test (see Szczypiński et al., 2021 section 2.3.2) between models 2 i 3
-```{r, echo = FALSE}
-library(lavaan)
-robust_dif(model_fit2,model_fit3)
-```
-### model 4 with covariance added between partB_gptsb3 and partB_gptsb4 based on mod indices:
-```{r, echo = FALSE}
-library(lavaan)
-model4 = 'reference =~ PartA_gptsa1 + PartA_gptsa2 +PartA_gptsa3 + PartA_gptsa4 +
-          PartA_gptsa5 + PartA_gptsa6 + PartA_gptsa7 
-          
-          persecutory =~ partB_gptsb1 + partB_gptsb2 + partB_gptsb3 + partB_gptsb4 +
-          partB_gptsb5 + partB_gptsb6 + partB_gptsb7 + partB_gptsb8 + partB_gptsb9 +
-          partB_gpts10
-partB_gptsb2 ~~ partB_gptsb4
-partB_gptsb3 ~~ partB_gptsb4'
-
-
-
-model_fit4 = cfa(model4, data = d, estimator = "WLSMV", std.lv=TRUE, missing = "listwise", ordered = T)
-
-fitmeasures(model_fit4,c('chisq.scaled','df.scaled',
-                         'cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
-
-robust_dif(model_fit3,model_fit4)
-
-mod_indices = modificationindices(model_fit4)
-head(mod_indices[order(mod_indices$mi, decreasing = T),],10)
-reliability(model_fit4)
-```
-
-### Difference in robust chi-square test (see Szczypiński et al., 2021 section 2.3.2) between models 3 i 4
-
-```{r, echo = FALSE}
-library(lavaan)
-robust_dif(model_fit3,model_fit4)
-```
-
-### model 5 z dodaną kowariancją między partB_gptsb2 ~~ partB_gptsb3 na podstawie mod indices:
-```{r, echo = FALSE}
-library(lavaan)
-model5 = 'reference =~ PartA_gptsa1 + PartA_gptsa2 +PartA_gptsa3 + PartA_gptsa4 +
-          PartA_gptsa5 + PartA_gptsa6 + PartA_gptsa7 
-          
-          persecutory =~ partB_gptsb1 + partB_gptsb2 + partB_gptsb3 + partB_gptsb4 +
-          partB_gptsb5 + partB_gptsb6 + partB_gptsb7 + partB_gptsb8 + partB_gptsb9 +
-          partB_gpts10
-partB_gptsb2 ~~ partB_gptsb4
-partB_gptsb3 ~~ partB_gptsb4
-partB_gptsb2 ~~ partB_gptsb3'
-
-model_fit5 = cfa(model5, data = d, estimator = "WLSMV", std.lv=TRUE, missing = "listwise", ordered = T)
-fitmeasures(model_fit5,c('chisq.scaled','df.scaled',                      'cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
-reliability(model_fit5)
-```
 
 ### summary of fit measures for three models of GPTSA
-
+### deleted models 3 to 5 since they did not differ significantly from model 2
 ```{r, echo = FALSE}
 fitmeasures(model_fit1,c('chisq.scaled', 'df.scaled', 'chisq.scaling.factor','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
 fitmeasures(model_fit2,c('chisq.scaled', 'df.scaled', 'chisq.scaling.factor','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
-fitmeasures(model_fit3,c('chisq.scaled', 'df.scaled', 'chisq.scaling.factor','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
-fitmeasures(model_fit4,c('chisq.scaled', 'df.scaled', 'chisq.scaling.factor','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
-fitmeasures(model_fit5,c('chisq.scaled', 'df.scaled', 'chisq.scaling.factor','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
 
 ```
 
 
-
-### Difference in robust chi-square test (see Szczypiński et al., 2021 section 2.3.2) between models 4 i 5
-```{r, echo = FALSE}
-library(lavaan)
-robust_dif(model_fit4, model_fit5)
-```
 
 ## MUSEQ is next
 
@@ -276,7 +196,7 @@ library(lavaan)
 robust_dif(fit, fit2)
 ```
 
-### Model 2 without item 6.1
+### Model 3 without item 6.1
 
 ```{r, echo = FALSE}
 model3 = 'auditory =~MUSEQ_1+MUSEQ_2+MUSEQ_3+MUSEQ_4+MUSEQ_5+MUSEQ_6+MUSEQ_7
@@ -309,7 +229,10 @@ reliability(fit3)
 library(lavaan)
 robust_dif(fit2, fit3)
 ```
-
+### Summary of model 3 MUSEQ
+```{r, echo = FALSE}
+summary(fit3, standardized=TRUE)
+```
 ### summary of fit measures for three models of MUSEQ
 
 ```{r, echo = FALSE}
@@ -380,7 +303,6 @@ BAPS13 ~~ BAPS14'
 fit3 = cfa(model3, data = d, estimator = 'WLSMV', ordered = TRUE, std.lv=TRUE, missing = "listwise",)
 fitmeasures(fit3,c('chisq.scaled','df.scaled','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
 reliability(fit3)
-
 ```
 
 ### Comparison between model 12 and 3 of BAPS
@@ -390,6 +312,10 @@ library(lavaan)
 robust_dif(fit2, fit3)
 ```
 
+### Summary of model 3 BAPS
+```{r, echo = FALSE}
+summary(fit3, standardized=TRUE)
+```
 
 ### summary of fit measures for three models of BAPS
 
@@ -397,4 +323,26 @@ robust_dif(fit2, fit3)
 fitmeasures(fit,c('chisq.scaled', 'df.scaled', 'chisq.scaling.factor','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
 fitmeasures(fit2,c('chisq.scaled', 'df.scaled', 'chisq.scaling.factor','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
 fitmeasures(fit3,c('chisq.scaled', 'df.scaled', 'chisq.scaling.factor','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
+```
+
+## Analiza IVI
+
+```{r, echo = FALSE}
+setwd("f:/projekty/Joachim/IVI")
+
+d <- read.csv("IVI.csv", sep=",", header =T)
+
+library(lavaan)
+library(semTools)
+colnames(d)[1] = 'IVI_1' 
+
+model = 'metaphysical =~ IVI_1 + IVI_3 + IVI_4 + IVI_5 + IVI_6 + IVI_8 + IVI_13 +
+IVI_14 + IVI_15 + IVI_16 + IVI_17 + IVI_25 + IVI_26
+positive =~ IVI_2 + IVI_7 + IVI_9 +IVI_18 +IVI_19 +IVI_20 + IVI_21 + IVI_24
+loss_of_control =~ IVI_10 +IVI_11 +IVI_12 +IVI_22 +IVI_23'
+
+fit = cfa(model, data = d, estimator = "WLSMV", std.lv=TRUE, missing = "listwise", ordered = T)
+#summary(fit,standardized=T, fit.measures = T, ordered = T)
+fitmeasures(fit,c('chisq.scaled', 'df.scaled', 'chisq.scaling.factor','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
+
 ```
