@@ -22,7 +22,7 @@ model = 'metaphysical =~ IVI_1 + IVI_3 + IVI_4 + IVI_5 + IVI_6 + IVI_8 + IVI_13 
 IVI_14 + IVI_15 + IVI_16 + IVI_17 + IVI_25 + IVI_26
 positive =~ IVI_2 + IVI_7 + IVI_9 +IVI_18 +IVI_19 +IVI_20 + IVI_21 + IVI_24
 loss_of_control =~ IVI_10 +IVI_11 +IVI_12 +IVI_22 +IVI_23'
-
+  
 model_fit = cfa(model, data = d, estimator = "WLSMV", std.lv=TRUE, missing = "listwise", ordered = T)
 summary(model_fit,standardized=T, fit.measures = T, ordered = T)
 

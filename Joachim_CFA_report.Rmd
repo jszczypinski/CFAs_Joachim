@@ -300,12 +300,12 @@ model3 = 'survival_strategy =~ BAPS2 + BAPS3 + BAPS4 + BAPS5 + BAPS6
         normalizing_beliefs =~ BAPS13 + BAPS14 + BAPS15 + BAPS16 + BAPS17 + BAPS18
 BAPS13 ~~ BAPS14'
 
-fit3 = cfa(model3, data = d, estimator = 'WLSMV', ordered = TRUE, std.lv=TRUE, missing = "listwise",)
+fit3 = cfa(model3, data = d, estimator = 'WLSMV', ordered = TRUE, std.lv=TRUE, missing = "listwise")
 fitmeasures(fit3,c('chisq.scaled','df.scaled','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
 reliability(fit3)
 ```
 
-### Comparison between model 12 and 3 of BAPS
+### Comparison between model 2 and 3 of BAPS
 
 ```{r, echo = FALSE}
 library(lavaan)
@@ -325,7 +325,7 @@ fitmeasures(fit2,c('chisq.scaled', 'df.scaled', 'chisq.scaling.factor','cfi.scal
 fitmeasures(fit3,c('chisq.scaled', 'df.scaled', 'chisq.scaling.factor','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
 ```
 
-## Analiza IVI
+## IVI analysis
 
 ```{r, echo = FALSE}
 setwd("f:/projekty/Joachim/IVI")
@@ -341,8 +341,106 @@ IVI_14 + IVI_15 + IVI_16 + IVI_17 + IVI_25 + IVI_26
 positive =~ IVI_2 + IVI_7 + IVI_9 +IVI_18 +IVI_19 +IVI_20 + IVI_21 + IVI_24
 loss_of_control =~ IVI_10 +IVI_11 +IVI_12 +IVI_22 +IVI_23'
 
-fit = cfa(model, data = d, estimator = "WLSMV", std.lv=TRUE, missing = "listwise", ordered = T)
-#summary(fit,standardized=T, fit.measures = T, ordered = T)
-fitmeasures(fit,c('chisq.scaled', 'df.scaled', 'chisq.scaling.factor','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
+fit = cfa(model, data = d, estimator = 'WLSMV', ordered = TRUE, std.lv=TRUE, missing = "listwise")
+summary(fit,standardized=T, fit.measures = T)
 
+```
+
+
+### the model was not identified, so the the factor solution was not optimal.  Thus we did run an iclust algorithm to find alternative factor model
+### the iclust plot is kind of hard to read so I saved it in separate .pdf file "iclust_ivi.pdf"
+``` {r, echo = FALSE}
+library(psych)
+library(EFA.dimensions)
+iclust((POLYCHORIC_R(d, method = "Fox", verbose = F)))
+```
+
+## PQ16 analysis, starting with simple 1-factor model, only with data from 2nd study
+```{r, echo = FALSE}
+setwd("f:/projekty/Joachim/PQ16")
+
+d <- read.csv("PQ16.csv", sep=",", header =T)
+
+library(lavaan)
+library(semTools)
+
+colnames(d)[1] = 'pq1' 
+
+d = subset(d, badanie == 2)
+
+model1 = ' factor =~ pq1 + pq2 + pq3 + pq4 + pq5 + pq6 + pq7 + pq8 + pq9 + pq10 +
+                    pq11 + pq12 + pq13 + pq14 + pq15 + pq16'
+fit1 = cfa(model1, data = d, estimator = 'WLSMV', std.lv=TRUE, missing = "listwise", ordered = TRUE)
+
+
+fitmeasures(fit1,c('chisq.scaled', 'df.scaled', 'chisq.scaling.factor','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
+
+
+reliability(fit1)
+
+mod_indices = modificationindices(fit1)
+head(mod_indices[order(mod_indices$mi, decreasing = T),],10)
+```
+
+### Next, we added covariance between pq7 and pq14
+
+```{r, echo = FALSE}
+
+model2 = ' factor =~ pq1 + pq2 + pq3 + pq4 + pq5 + pq6 + pq7 + pq8 + pq9 + pq10 +
+                    pq11 + pq12 + pq13 + pq14 + pq15 + pq16
+pq7 ~~ pq14'
+fit2 = cfa(model2, data = d, estimator = 'WLSMV', std.lv=TRUE, missing = "listwise", ordered = TRUE)
+
+
+fitmeasures(fit2,c('chisq.scaled', 'df.scaled', 'chisq.scaling.factor','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
+
+
+reliability(fit2)
+
+mod_indices = modificationindices(fit2)
+head(mod_indices[order(mod_indices$mi, decreasing = T),],10)
+```
+
+### Comparison between model 1 and 2 of PQ16
+
+```{r, echo = FALSE}
+library(lavaan)
+robust_dif(fit1, fit2)
+```
+
+
+### and in the next model, we added covariance between pq1 and pq7
+
+```{r, echo = FALSE}
+model3 = ' factor =~ pq1 + pq2 + pq3 + pq4 + pq5 + pq6 + pq7 + pq8 + pq9 + pq10 +
+                    pq11 + pq12 + pq13 + pq14 + pq15 + pq16
+pq7 ~~ pq14
+pq1 ~~ pq7'
+fit3 = cfa(model3, data = d, estimator = 'WLSMV', std.lv=TRUE, missing = "listwise", ordered = TRUE)
+
+
+fitmeasures(fit3,c('chisq.scaled', 'df.scaled', 'chisq.scaling.factor','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
+
+
+reliability(fit3)
+```
+
+### Comparison between model 1 and 2 of PQ16
+
+```{r, echo = FALSE}
+library(lavaan)
+robust_dif(fit2, fit3)
+```
+
+### Summary of model 3 PQ16
+```{r, echo = FALSE}
+summary(fit3, standardized=TRUE)
+```
+
+### summary of fit measures for three models of PQ16
+
+```{r, echo = FALSE}
+fitmeasures(fit1,c('chisq.scaled', 'df.scaled', 'chisq.scaling.factor','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
+fitmeasures(fit2,c('chisq.scaled', 'df.scaled', 'chisq.scaling.factor','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
+fitmeasures(fit3,c('chisq.scaled', 'df.scaled', 'chisq.scaling.factor','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))
 ```
