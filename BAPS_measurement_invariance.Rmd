@@ -1,0 +1,137 @@
+---
+title: "BAPS Invariance testing Joachim_Kowalski"
+author: "Jan Szczypiński"
+date: "08 10 2021"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+## The MI analysis of BAPS
+
+First loading the packages, data and a function
+```{r, echo=FALSE}
+library(lavaan)
+library(semTools)
+source('F:/projekty/robust_diff.R')
+
+setwd("f:/projekty/Joachim/BAPS")
+
+d <- read.csv("BAPS.csv", sep=",", header =T)
+```
+
+We create a matrix to compare fit indices across models with different constraints
+```{r}
+
+all.results<-matrix(NA, nrow = 4, ncol = 6)
+
+```
+
+##Configural invariance 
+
+We follow the Wu and Estabrook (2016) procedure for caluclating invariance for models with variables on categorical scale
+We use delta parametrization.
+Groups are split based on psychiatric diagnosis (yes/no);
+
+First we create a syntax for a configural (baseline) model using semTools package
+```{r}
+
+model3 = 'survival_strategy =~ BAPS2 + BAPS3 + BAPS4 + BAPS5 + BAPS6
+        negative_beliefs =~ BAPS7 + BAPS8 + BAPS9 + BAPS10 + BAPS11 + BAPS12
+        normalizing_beliefs =~ BAPS13 + BAPS14 + BAPS15 + BAPS16 + BAPS17 + BAPS18
+BAPS13 ~~ BAPS14'
+
+MI_syntax_conf = measEq.syntax(configural.model = model3, data = d, ordered = TRUE, 
+                    ID.cat ='Wu.2016', ID.fac ='unit.variance', parameterization = 'delta',
+                    group = "diagnoza", group.equal = 'configural')
+```
+Next, we fit the configural (baseline model).
+If the fit indices are ok (Hu and Bentler, 1999) we assume configural invariance
+```{r}
+cfa.config = cfa(as.character(MI_syntax_conf), data = d, estimator = "WLSMV", 
+                group = "diagnoza", missing = 'listwise', ordered = TRUE)
+fitmeasures(cfa.config,c('chisq.scaled','df.scaled','cfi.scaled','tli.scaled',
+                         'rmsea.scaled','srmr'))
+```
+
+We write the fit indices to the matrix created earlier.
+
+```{r}
+all.results[1,] =round(data.matrix((fitmeasures(cfa.config,c('chisq.scaled',
+                'df.scaled','cfi.scaled','tli.scaled','rmsea.scaled','srmr')))), digits = 4)
+```
+
+##Treshold invariance 
+First, we create a syntax for a model with thresholds constrain.
+```{r}
+MI_syntax_thresh = measEq.syntax(configural.model = model3, data = d, ordered = TRUE, 
+                ID.cat ='Wu.2016', ID.fac ='unit.variance', parameterization = 'delta',
+                 group = "diagnoza", group.equal = 'thresholds')
+```
+Next, we fit the model and  save  fit indices to the matrix
+
+```{r}
+cfa.thresholds <- cfa(as.character(MI_syntax_thresh), data = d, estimator = "WLSMV", 
+                      group = "diagnoza", missing = 'listwise', ordered = TRUE)
+all.results[2,] =round(data.matrix((fitmeasures(cfa.thresholds,c('chisq.scaled',
+                'df.scaled','cfi.scaled','tli.scaled','rmsea.scaled','srmr')))),digits = 4)
+```
+Finally we compare baseline model and threshold model using Satorra-Bentler Scaled chi^2 difference test
+```{r}
+robust_diff(cfa.thresholds,cfa.config)
+```
+We see that the models do not differ significantly, thus we can assume threshold invariance.
+
+##Metric invariance
+
+First, we create a syntax for a model with thresholds and loadings constrains.
+
+```{r}
+MI_syntax_metric = measEq.syntax(configural.model = model3, data = d, ordered = TRUE, 
+                                ID.cat ='Wu.2016', ID.fac ='unit.variance', parameterization = 'delta',
+                                 group = "diagnoza", group.equal = c('thresholds','loadings'))
+
+```
+Next, we fit the model and  save  fit indices to the matrix
+
+```{r}
+cfa.metric <- cfa(as.character(MI_syntax_metric), data = d, estimator = "WLSMV", 
+                  group = "diagnoza", missing = 'listwise', ordered = TRUE)
+
+all.results[3,] =round(data.matrix((fitmeasures(cfa.metric,c('chisq.scaled',
+                'df.scaled','cfi.scaled','tli.scaled','rmsea.scaled','srmr')))),digits = 4)
+```
+Finally we compare threshold model and metric model using Satorra-Bentler Scaled chi^2 difference test
+```{r}
+robust_diff(cfa.metric,cfa.thresholds)
+```
+Again the test was not significant so we assume metric invariance and proceed to the last step
+
+##Scalar invariance
+
+First, we create a syntax for a model with thresholds, loadings, and intercepts constrains.
+
+```{r}
+MI_syntax_scalar = measEq.syntax(configural.model = model3, data = d, ordered = TRUE, 
+                                 ID.cat ='Wu.2016', ID.fac ='unit.variance', parameterization = 'delta',
+                                 group = "diagnoza", group.equal = c('thresholds','loadings','intercepts'))
+
+```
+Next, we fit the model and  save  fit indices to the matrix
+
+```{r}
+cfa.scalar <- cfa(as.character(MI_syntax_scalar), data = d, estimator = "WLSMV", 
+                  group = "diagnoza", missing = 'listwise', ordered = TRUE)
+
+
+all.results[4,] = round(data.matrix((fitmeasures(cfa.scalar,c('chisq.scaled',
+                'df.scaled','cfi.scaled','tli.scaled','rmsea.scaled','srmr')))),digits =4)
+```
+Finally we compare scalar model and metric model using Satorra-Bentler Scaled chi^2 difference test
+```{r}
+robust_diff(cfa.scalar,cfa.metric)
+colnames(all.results) = c('chisq.scaled',
+                'df.scaled','cfi.scaled','tli.scaled','rmsea.scaled','srmr')
+print(all.results)
+```
+The test was not significant, thus we can assume scalar invariance. 

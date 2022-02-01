@@ -1,0 +1,220 @@
+---
+title: "PQ16 Invariance testing Joachim_Kowalski"
+author: "Jan Szczypiński"
+date: "08 10 2021"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+## The MI analysis of PQ16
+
+First loading the packages, data and a function.
+We use data only from study 2
+```{r, echo=FALSE}
+setwd("f:/projekty/Joachim/PQ16")
+d <- read.csv("PQ16.csv", sep=",", header =T)
+source('F:/projekty/robust_diff.R')
+library(lavaan)
+library(semTools)
+
+colnames(d)[1] = 'pq1' 
+
+d = subset(d, badanie == 2)
+```
+
+We create a matrix to compare fit indices across models with different constraints
+```{r}
+
+all.results<-matrix(NA, nrow = 4, ncol = 6)
+
+```
+
+##Configural invariance 
+
+We follow the Wu and Estabrook (2016) procedure for caluclating invariance for models with variables on categorical scale
+We use delta parametrization.
+Groups are split based on psychiatric diagnosis (yes/no);
+
+First we create a syntax for a configural (baseline) model using semTools package
+```{r}
+
+model3 = ' factor =~ pq1 + pq2 + pq3 + pq4 + pq5 + pq6 + pq7 + pq8 + pq9 + pq10 +
+                    pq11 + pq12 + pq13 + pq14 + pq15 + pq16
+pq7 ~~ pq14
+pq1 ~~ pq7'
+
+MI_syntax_conf = measEq.syntax(configural.model = model3, data = d, ordered = TRUE, 
+                    ID.cat ='Wu.2016', ID.fac ='unit.variance', parameterization = 'delta',
+                    group = "diag", group.equal = 'configural')
+```
+Next, we fit the configural (baseline model).
+If the fit indices are ok (Hu and Bentler, 1999) we assume configural invariance
+```{r}
+cfa.config = cfa(as.character(MI_syntax_conf), data = d, estimator = "WLSMV", 
+                group = "diag", missing = 'listwise', ordered = TRUE)
+fitmeasures(cfa.config,c('chisq.scaled','df.scaled','cfi.scaled','tli.scaled',
+                         'rmsea.scaled','srmr'))
+```
+
+We write the fit indices to the matrix created earlier.
+
+```{r}
+all.results[1,] =round(data.matrix((fitmeasures(cfa.config,c('chisq.scaled',
+                'df.scaled','cfi.scaled','tli.scaled','rmsea.scaled','srmr')))), digits = 4)
+```
+
+##Treshold invariance 
+First, we create a syntax for a model with thresholds constrain.
+```{r}
+MI_syntax_thresh = measEq.syntax(configural.model = model3, data = d, ordered = TRUE, 
+                ID.cat ='Wu.2016', ID.fac ='unit.variance', parameterization = 'delta',
+                 group = "diag", group.equal = 'thresholds')
+```
+Next, we fit the model and  save  fit indices to the matrix
+
+```{r}
+cfa.thresholds <- cfa(as.character(MI_syntax_thresh), data = d, estimator = "WLSMV", 
+                      group = "diag", missing = 'listwise', ordered = TRUE)
+all.results[2,] =round(data.matrix((fitmeasures(cfa.thresholds,c('chisq.scaled',
+                'df.scaled','cfi.scaled','tli.scaled','rmsea.scaled','srmr')))),digits = 4)
+```
+Finally we compare baseline model and threshold model using Satorra-Bentler Scaled chi^2 difference test
+```{r}
+robust_diff(cfa.thresholds,cfa.config)
+```
+We see that the models do not differ significantly, thus we can assume threshold invariance.
+
+##Metric invariance
+
+First, we create a syntax for a model with thresholds and loadings constrains.
+
+```{r}
+MI_syntax_metric = measEq.syntax(configural.model = model3, data = d, ordered = TRUE, 
+                                ID.cat ='Wu.2016', ID.fac ='unit.variance', parameterization = 'delta',
+                                 group = "diag", group.equal = c('thresholds','loadings'))
+
+```
+Next, we fit the model and  save  fit indices to the matrix
+
+```{r}
+cfa.metric <- cfa(as.character(MI_syntax_metric), data = d, estimator = "WLSMV", 
+                  group = "diag", missing = 'listwise', ordered = TRUE)
+
+all.results[3,] =round(data.matrix((fitmeasures(cfa.metric,c('chisq.scaled',
+                'df.scaled','cfi.scaled','tli.scaled','rmsea.scaled','srmr')))),digits = 4)
+```
+Finally we compare threshold model and metric model using Satorra-Bentler Scaled chi^2 difference test
+```{r}
+robust_diff(cfa.metric,cfa.thresholds)
+```
+The test was significant so we can't assume metric invariance
+The next step is to explore which constrained parameter needs to be freed to improve the fit.
+We use lavTestScore function to print the parameters which have the most influence on the model
+```{r}
+param = lavTestScore(cfa.metric)$uni
+head(param[order(param$X2,decreasing =T),],10)
+```
+
+We need to use the parTable function to see what parameter numbers mean
+
+```{r}
+head(parTable(cfa.metric),10)
+```
+We will free the factor	=~	pq1 parameter to see if we can get partial metric invariance
+```{r}
+MI_syntax_metric.part = measEq.syntax(configural.model = model3, data = d, ordered = TRUE, 
+                                ID.cat ='Wu.2016', ID.fac ='unit.variance', parameterization = 'delta',
+                                 group = "diag", group.equal = c('thresholds','loadings'), group.partial = 'factor	=~	pq1')
+
+```
+Next, we fit the model and  save  fit indices to the matrix
+
+```{r}
+cfa.metric.part <- cfa(as.character(MI_syntax_metric.part), data = d, estimator = "WLSMV", 
+                  group = "diag", missing = 'listwise', ordered = TRUE)
+
+all.results[4,] =round(data.matrix((fitmeasures(cfa.metric,c('chisq.scaled',
+                'df.scaled','cfi.scaled','tli.scaled','rmsea.scaled','srmr')))),digits = 4)
+```
+Finally we compare threshold model and metric model using Satorra-Bentler Scaled chi^2 difference test
+```{r}
+robust_diff(cfa.metric.part,cfa.thresholds)
+```
+The test is still significant so we will look for another parameter
+```{r}
+param = lavTestScore(cfa.metric.part)$uni
+head(param[order(param$X2,decreasing =T),],10)
+```
+
+We need to use the parTable function to see what parameter numbers mean
+
+```{r}
+head(parTable(cfa.metric.part),10)
+```
+We will free the factor	=~	pq11 parameter to see if we can get partial metric invariance
+```{r}
+MI_syntax_metric.part = measEq.syntax(configural.model = model3, data = d, ordered = TRUE, 
+                                ID.cat ='Wu.2016', ID.fac ='unit.variance', parameterization = 'delta',
+                                 group = "diag", group.equal = c('thresholds','loadings'), 
+                                group.partial = c('factor	=~	pq1','factor	=~	pq11'))
+
+```
+Next, we fit the model and  save  fit indices to the matrix
+
+```{r}
+cfa.metric.part <- cfa(as.character(MI_syntax_metric.part), data = d, estimator = "WLSMV", 
+                  group = "diag", missing = 'listwise', ordered = TRUE)
+
+all.results =rbind(all.results,round((fitmeasures(cfa.metric,c('chisq.scaled',
+                'df.scaled','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))),digits = 4))
+```
+Finally we compare threshold model and metric model using Satorra-Bentler Scaled chi^2 difference test
+```{r}
+robust_diff(cfa.metric.part,cfa.thresholds)
+
+```
+We will free the factor	=~	pq7 parameter to see if we can get partial metric invariance
+```{r}
+MI_syntax_metric.part = measEq.syntax(configural.model = model3, data = d, ordered = TRUE, 
+                                ID.cat ='Wu.2016', ID.fac ='unit.variance', parameterization = 'delta',
+                                 group = "diag", group.equal = c('thresholds','loadings'), 
+                                group.partial = c('factor	=~	pq1','factor	=~	pq11','factor	=~	pq7'))
+
+```
+Next, we fit the model and  save  fit indices to the matrix
+
+```{r}
+cfa.metric.part <- cfa(as.character(MI_syntax_metric.part), data = d, estimator = "WLSMV", 
+                  group = "diag", missing = 'listwise', ordered = TRUE)
+
+all.results =rbind(all.results,round((fitmeasures(cfa.metric,c('chisq.scaled',
+                'df.scaled','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))),digits = 4))
+```
+Finally we compare threshold model and metric model using Satorra-Bentler Scaled chi^2 difference test
+```{r}
+robust_diff(cfa.metric.part,cfa.thresholds)
+```
+
+We will free the factor	=~	pq2 parameter to see if we can get partial metric invariance
+```{r}
+MI_syntax_metric.part = measEq.syntax(configural.model = model3, data = d, ordered = TRUE, 
+                                ID.cat ='Wu.2016', ID.fac ='unit.variance', parameterization = 'delta',
+                                 group = "diag", group.equal = c('thresholds','loadings'), 
+                                group.partial = c('factor	=~	pq1','factor	=~	pq11','factor	=~	pq7','factor=~pq2'))
+
+```
+Next, we fit the model and  save  fit indices to the matrix
+
+```{r}
+cfa.metric.part <- cfa(as.character(MI_syntax_metric.part), data = d, estimator = "WLSMV", 
+                  group = "diag", missing = 'listwise', ordered = TRUE)
+
+all.results =rbind(all.results,round((fitmeasures(cfa.metric,c('chisq.scaled',
+                'df.scaled','cfi.scaled','tli.scaled','rmsea.scaled','srmr'))),digits = 4))
+```
+Finally we compare threshold model and metric model using Satorra-Bentler Scaled chi^2 difference test
+```{r}
+robust_diff(cfa.metric.part,cfa.thresholds)
+```
+Even with 4 freely estimated factor loadings the partial metric invariance still couldn't be met. Thus, we conclude that metric invariance is not present for the pq16
