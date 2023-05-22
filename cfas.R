@@ -13,7 +13,7 @@ model = 'reference =~PartA_gptsa1 + PartA_gptsa2 + PartA_gptsa3 + PartA_gptsa4 +
         partB_gpts10
 '
 
-fit = cfa(model, data = d, estimator = 'WLSMV', ordered = TRUE)
+fit = cfa(model, data = d, estimator = 'MLR', ordered = TRUE)
 
 summary(fit, fit.measures=TRUE, standardized=TRUE)
 
